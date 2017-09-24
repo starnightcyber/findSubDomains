@@ -46,7 +46,7 @@ class SubNameBrute:
         self.scan_count = self.found_count = 0
         self.console_width = getTerminalSize()[0] - 2
 
-        # 创建dns 解析器池
+        # create dns resolver pool ~ workers
         self.resolvers = [dns.resolver.Resolver(configure=False) for _ in range(options.threads)]
         for resolver in self.resolvers:
             resolver.lifetime = resolver.timeout = 10.0
