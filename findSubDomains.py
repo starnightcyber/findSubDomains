@@ -13,8 +13,7 @@
 
 """
     program description : subDomainsBrute is for finding sub domains of a target domain
-    a very simple way turns to be brute force, simple and effective
-
+    A very simple way turns to be brute force, simple and effective
     ~ and the idea is simple too, find the target sub domains using dictionary (important)
     ~ using the found sub domains for further brute force
     ~ before that, you have to know how the DNS works, please refer to concerned materials
@@ -26,11 +25,9 @@ monkey.patch_all()
 from gevent.pool import Pool
 from gevent.queue import PriorityQueue
 import sys
-import re
 import dns.resolver
 import time
 import optparse
-import os
 from lib.consle_width import getTerminalSize
 from multiprocessing import cpu_count
 
@@ -65,11 +62,11 @@ class SubNameBrute:
         self.subsubs = []
         self._load_subname('dict/next_sub.txt', self.subsubs)
 
-        # results will be save to target.txt
+        # results will save to target.txt
         self.outfile = open(target + '.txt', 'a')
 
-        self.ip_dict = set()                            #
-        self.found_sub = set()
+        self.ip_dict = set()             # save ip
+        self.found_sub = set()           # save found subnames
 
         # task queue
         self.queue = PriorityQueue()
@@ -92,9 +89,9 @@ class SubNameBrute:
         for server in open('dict/dns_servers.txt').xreadlines():
             server = server.strip()
             if server:
-                pool.apply_async(self._test_server, (server, ))
+                pool.apply_async(self._test_server, (server, ))     # test dns server
 
-        pool.join()                                     # waiting for process finish
+        pool.join()                                     # waiting for process to finish
         self.dns_count = len(self.dns_servers)
 
         sys.stdout.write('\n')
@@ -157,7 +154,7 @@ class SubNameBrute:
                             subname_list.append(item)
 
     """
-        for better presentation of brute force results, not really matters ...
+        for better presentation of brute force results ...
     """
     def _print_msg(self, _msg=None, _found_msg=False):
         if _msg is None:
@@ -194,9 +191,17 @@ class SubNameBrute:
                 continue
 
             if answers:
-                self.found_sub.add(cur_sub_domain)
+                # self.found_sub.add(cur_sub_domain)
                 ips = ', '.join(sorted([answer.address for answer in answers]))
 
+                # exclude kept address & intranet address
+                if ips in ['1.1.1.1', '127.0.0.1', '0.0.0.0']:
+                    continue
+                if SubNameBrute.is_intranet(answers[0].address):
+                    continue
+
+                # now, this sub is ok, and can be added to goodsub list and write to file
+                self.found_sub.add(cur_sub_domain)
                 for answer in answers:
                     self.ip_dict.add(answer.address)
 
@@ -224,7 +229,6 @@ class SubNameBrute:
     """
     def run(self):
         threads = [gevent.spawn(self._scan, i) for i in range(self.options.threads)]
-
         print '[*] Initializing %d threads' % self.options.threads
 
         try:
@@ -258,11 +262,20 @@ if __name__ == '__main__':
     d.run()
     print '--------------------------------------'
     print '%d subnames found' % len(d.found_sub)
+    print '[*] Program running %.1f seconds ' % (time.time() - d.start_time)
 
-    """
-    for ip in d.ip_dict:
-        print ip
-    """
+    print '[*] It is usually not recommended to exploit second-level sub domains, because it will tries %d times' \
+          % (len(d.found_sub) * len(d.subsubs))
+    print '[*] And the second level sub domains will just resolve to the same ip address.'
+    go_on = raw_input('[-] Are you consist? YES/NO : ')
+    if go_on == 'YES' or go_on == 'y' or go_on == 'Y':
+        print '[*] You want to go on ... Right '
+        print "[-] Ok, I'll tell you how, comment the following line : sys.exit()"
+        # sys.exit()              # comment it
+    else:
+        print '[*] Program abortion'
+        sys.exit()
+
     print '[*]Exploiting second level sub names ...'
 
     d.queue = PriorityQueue()
@@ -276,9 +289,7 @@ if __name__ == '__main__':
     print '%d subnames found in total' % len(d.found_sub)
     print '[*]Results are save to file %s.txt' % args
 
-    """
-        save ips and domains to files
-    """
+    # save ips and domains to files
     with open(args[0]+'-ip.txt', 'w') as f:
         for ip in d.ip_dict:
             f.write(ip + '\n')
