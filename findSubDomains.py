@@ -7,7 +7,8 @@
     @contact : my[at]lijiejie.com (http://www.lijiejie.com)
 
     Modified by : starnight_cyber
-    @contact : starnight_cyber@foxmaail.com
+    @contact : starnight_cyber@foxmail.com
+    blog : http://www.cnblogs.com/Hi-blog/
     Time : 2017.09.23
 """
 
