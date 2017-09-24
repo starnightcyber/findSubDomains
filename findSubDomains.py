@@ -194,9 +194,15 @@ class SubNameBrute:
                 continue
 
             if answers:
-                self.found_sub.add(cur_sub_domain)
                 ips = ', '.join(sorted([answer.address for answer in answers]))
 
+                # exclude : intranet or kept addresses
+                if ips in ['1.1.1.1', '127.0.0.1', '0.0.0.0']:
+                    continue
+                if SubNameBrute.is_intranet(answers[0].address):
+                    continue
+
+                self.found_sub.add(cur_sub_domain)
                 for answer in answers:
                     self.ip_dict.add(answer.address)
 
@@ -258,23 +264,27 @@ if __name__ == '__main__':
     d.run()
     print '--------------------------------------'
     print '%d subnames found' % len(d.found_sub)
+    print '[*] Program running %.1f seconds ' % (time.time() - d.start_time)
 
-    """
-    for ip in d.ip_dict:
-        print ip
-    """
-    print '[*]Exploiting second level sub names ...'
+    print '[*] It is usually not recommended to exploit second-level sub domains,because needs to try %d times' \
+          % (len(d.subsubs) * len(d.goodsubs))
+    go_on = raw_input('[-] Are you consist? YES/NO : ')
+    if go_on == 'YES' or go_on == 'y' or go_on == 'Y' or go_on == 'yes':
+        print '[*]Exploiting second level sub names ...'
 
-    d.queue = PriorityQueue()
-    for subsub in d.subsubs:
-        for sub in d.goodsubs:
-            subname = subsub + '.' + sub
-            d.queue.put(subname)
+        d.queue = PriorityQueue()
+        for subsub in d.subsubs:
+            for sub in d.goodsubs:
+                subname = subsub + '.' + sub
+                d.queue.put(subname)
 
-    print 'There are %d subs waiting for trying ...' % len(d.queue)
-    d.run()
+        print 'There are %d subs waiting for trying ...' % len(d.queue)
+        d.run()
+    else:
+        pass
+
     print '%d subnames found in total' % len(d.found_sub)
-    print '[*]Results are save to file %s.txt' % args
+    print '[*]Results are saved to threes files starts with %s' % args
 
     """
         save ips and domains to files

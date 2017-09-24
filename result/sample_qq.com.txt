@@ -1154,7 +1154,7 @@ image.auto.qq.com             	163.177.56.18
 forum.auto.qq.com             	125.39.240.113, 61.135.157.156
 d.auto.qq.com                 	112.90.78.207
 data.auto.qq.com              	125.39.240.113, 61.135.157.156
-cgi.data.auto.qq.com          	163.177.56.18
+p          	163.177.56.18
 w.auto.qq.com                 	125.39.240.113, 61.135.157.156
 wap.auto.qq.com               	125.39.240.113, 61.135.157.156
 weixin.auto.qq.com            	163.177.72.178
