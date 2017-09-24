@@ -41,4 +41,4 @@ A tool finding sub domains for penetesters
 
 ## Last
 Continue to make it better, RFC:Request For Comment.
- 
+Print_Msg method needs to improve.
