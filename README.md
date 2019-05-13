@@ -1,5 +1,5 @@
 # findSubDomains
-A tool finding sub domains for penetesters
+A tool finding sub-domains of a target site for us penetesters.
 
 ## Preface
 这个脚本源自lijiejie/subDomainsBrute， 用来探测子域名，我删除了很多代码，也添加了不少注释，使得代码变得更简练和清晰。
@@ -39,7 +39,3 @@ A tool finding sub domains for penetesters
     3g.baidu.com    115.239.217.67, 115.239.217.68
     7.baidu.com     61.135.185.212
 
-## Last
-Continue to make it better, RFC:Request For Comment.
-
-Print_Msg method needs improving.

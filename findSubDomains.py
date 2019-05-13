@@ -9,16 +9,18 @@
     Modified by : starnight_cyber
     @contact : starnight_cyber@foxmail.com
     blog : http://www.cnblogs.com/Hi-blog/
-    Time : 2017.09.23
+    Time : 2017.09.23/2019.5.13
 """
 
 """
-    program description : subDomainsBrute is for finding sub domains of a target domain
-    a very simple way turns to be brute force, simple and effective
+    @2017.09.23
+        program description : subDomainsBrute is for finding sub domains of a target domain
+        a very simple way turns to be brute force, simple and effective
 
-    ~ and the idea is simple too, find the target sub domains using dictionary (important)
-    ~ using the found sub domains for further brute force
-    ~ before that, you have to know how the DNS works, please refer to concerned materials
+        ~ and the idea is simple too, find the target sub domains using dictionary (important)
+        ~ using the found sub domains for further brute force
+    @2019.5.13
+        For python 3 only
 """
 
 import gevent
@@ -27,13 +29,12 @@ monkey.patch_all()
 from gevent.pool import Pool
 from gevent.queue import PriorityQueue
 import sys
-import re
 import dns.resolver
 import time
 import optparse
 import os
-from lib.consle_width import getTerminalSize
 from multiprocessing import cpu_count
+
 
 class SubNameBrute:
     """
@@ -44,7 +45,7 @@ class SubNameBrute:
         self.target = target.strip()
         self.options = options
         self.scan_count = self.found_count = 0
-        self.console_width = getTerminalSize()[0] - 2
+        self.console_width = os.get_terminal_size()[0] - 2
 
         # create dns resolver pool ~ workers
         self.resolvers = [dns.resolver.Resolver(configure=False) for _ in range(options.threads)]
@@ -66,7 +67,7 @@ class SubNameBrute:
         self.subsubs = []
         self._load_subname('dict/next_sub.txt', self.subsubs)
 
-        # results will be save to target.txt
+        # results will save to target.txt
         self.outfile = open(target + '.txt', 'a')
 
         self.ip_dict = set()                            #
@@ -81,16 +82,15 @@ class SubNameBrute:
         Load DNS Servers(ip saved in file), and check whether the DNS servers works fine
     """
     def _load_dns_servers(self):
-
-        print '[*] Validate DNS servers ...'
+        print('[*] Validate DNS servers ...')
         self.dns_servers = []
 
-        # create a process pool for checking DNS servers, the number is your processors(cores) * 4, just change it!
-        processors = cpu_count() * 4
+        # create a process pool for checking DNS servers, the number is your processors(cores) * 2, just change it!
+        processors = cpu_count() * 2
         pool = Pool(processors)
 
         # read dns ips and check one by one
-        for server in open('dict/dns_servers.txt').xreadlines():
+        for server in open('dict/dns_servers.txt').readlines():
             server = server.strip()
             if server:
                 pool.apply_async(self._test_server, (server, ))
@@ -99,9 +99,11 @@ class SubNameBrute:
         self.dns_count = len(self.dns_servers)
 
         sys.stdout.write('\n')
-        print '[*] Found %s available DNS Servers in total' % self.dns_count
+        dns_info = '[*] Found {} available DNS Servers in total'.format(self.dns_count)
+        print(dns_info)
+
         if self.dns_count == 0:
-            print '[ERROR] No DNS Servers available.'
+            print('[ERROR] No DNS Servers available.')
             sys.exit(-1)
 
     """
@@ -116,7 +118,6 @@ class SubNameBrute:
         try:
             resolver.nameservers = [server]
 
-            # test : resolving a known domain, and check whether can get the right result
             answers = resolver.query('public-dns-a.baidu.com')
             if answers[0].address != '180.76.76.76':
                 raise Exception('incorrect DNS response')
@@ -187,7 +188,6 @@ class SubNameBrute:
         while not self.queue.empty():
             sub = self.queue.get(timeout=1.0)
 
-            # print cur_sub_domain
             try:
                 cur_sub_domain = sub + '.' + self.target
                 answers = self.resolvers[j].query(cur_sub_domain)
@@ -210,7 +210,8 @@ class SubNameBrute:
                 if sub not in self.goodsubs:
                     self.goodsubs.append(sub)
 
-                print cur_sub_domain, '\t', ips
+                ip_info = '{} \t {}'.format(cur_sub_domain, ips)
+                print(ip_info)
                 self.outfile.write(cur_sub_domain + '\t' + ips + '\n')
 
     @staticmethod
@@ -232,22 +233,23 @@ class SubNameBrute:
     def run(self):
         threads = [gevent.spawn(self._scan, i) for i in range(self.options.threads)]
 
-        print '[*] Initializing %d threads' % self.options.threads
+        print('[*] Initializing %d threads' % self.options.threads)
 
         try:
             gevent.joinall(threads)
-        except KeyboardInterrupt, e:
+        except KeyboardInterrupt as e:
             msg = '[WARNING] User aborted.'
             sys.stdout.write('\r' + msg + ' ' * (self.console_width - len(msg)) + '\n\r')
             sys.stdout.flush()
 
 
+
 if __name__ == '__main__':
-    parser = optparse.OptionParser('usage: %prog [options] target.com', version="%prog 1.0.6")
+    parser = optparse.OptionParser('usage: %prog [options] target.com', version="%prog 2.0")
     parser.add_option('-f', dest='file', default='subnames.txt',
-                      help='File contains new line delimited subs, default is subnames.txt.')
+                      help='Dictionary file, default is subnames.txt.')
     parser.add_option('--full', dest='full_scan', default=False, action='store_true',
-                      help='Full scan, NAMES FILE subnames_full.txt will be used to brute')
+                      help='To carry out full bruteforce, subnames_full.txt will be used as dictionary file')
     parser.add_option('-t', '--threads', dest='threads', default=100, type=int,
                       help='Num of scan threads, 100 by default')
 
@@ -259,19 +261,19 @@ if __name__ == '__main__':
     # initialization ...
     d = SubNameBrute(target=args[0], options=options)
 
-    print '[*] Exploiting sub domains of ', args[0]
-    print '[+] There are %d subs waiting for trying ...' % len(d.queue)
-    print '--------------------------------------'
+    print('[*] Exploiting sub domains of ', args[0])
+    print('[+] There are %d subs waiting for trying ...' % len(d.queue))
+    print('--------------------------------------')
     d.run()
-    print '--------------------------------------'
-    print '%d subnames found' % len(d.found_sub)
-    print '[*] Program running %.1f seconds ' % (time.time() - d.start_time)
+    print('--------------------------------------')
+    print('%d subnames found' % len(d.found_sub))
+    print('[*] Program running %.1f seconds ' % (time.time() - d.start_time))
 
-    print '[*] It is usually not recommended to exploit second-level sub domains,because needs to try %d times' \
-          % (len(d.subsubs) * len(d.goodsubs))
-    go_on = raw_input('[-] Are you consist? YES/NO : ')
+    print('[*] It is usually not recommended to exploit second-level sub domains,because needs to try %d times' \
+          % (len(d.subsubs) * len(d.goodsubs)))
+    go_on = input('[-] Are you consist? YES/NO : ')
     if go_on == 'YES' or go_on == 'y' or go_on == 'Y' or go_on == 'yes':
-        print '[*]Exploiting second level sub names ...'
+        print('[*]Exploiting second level sub names ...')
 
         d.queue = PriorityQueue()
         for subsub in d.subsubs:
@@ -279,13 +281,13 @@ if __name__ == '__main__':
                 subname = subsub + '.' + sub
                 d.queue.put(subname)
 
-        print 'There are %d subs waiting for trying ...' % len(d.queue)
+        print('There are %d subs waiting for trying ...' % len(d.queue))
         d.run()
     else:
         pass
 
-    print '%d subnames found in total' % len(d.found_sub)
-    print '[*]Results are saved to threes files starts with %s' % args
+    print('%d subnames found in total' % len(d.found_sub))
+    print('[*]Results are saved to threes files starts with %s' % args)
 
     """
         save ips and domains to files
@@ -298,7 +300,7 @@ if __name__ == '__main__':
         for domain in d.found_sub:
             f.write(domain + '\n')
 
-    print '[*] Program running %.1f seconds ' % (time.time() - d.start_time)
+    print('[*] Program running %.1f seconds ' % (time.time() - d.start_time))
 
     d.outfile.flush()
     d.outfile.close()
