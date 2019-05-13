@@ -198,7 +198,7 @@ class SubNameBrute:
                 ips = ', '.join(sorted([answer.address for answer in answers]))
 
                 # exclude : intranet or kept addresses
-                if ips in ['1.1.1.1', '127.0.0.1', '0.0.0.0']:
+                if ips in ['1.1.1.1', '127.0.0.1', '0.0.0.0', '0.0.0.1']:
                     continue
                 if SubNameBrute.is_intranet(answers[0].address):
                     continue
