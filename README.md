@@ -1,6 +1,8 @@
 # findSubDomains
 A tool finding sub-domains of a target site for penetesters with python3.
 
+Domain Collection please refer : [互联网公司子域名收集](https://github.com/starnightcyber/subDomains)
+
 ## Preface
 This script is used to detect subdomains. 
 
